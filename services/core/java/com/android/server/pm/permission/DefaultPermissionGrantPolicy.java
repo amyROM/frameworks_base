@@ -703,17 +703,17 @@ final class DefaultPermissionGrantPolicy {
                 userId, CONTACTS_PERMISSIONS, CALENDAR_PERMISSIONS);
 
         // Browser
-        String browserPackage = ArrayUtils.firstOrNull(getKnownPackages(
-                PackageManagerInternal.PACKAGE_BROWSER, userId));
-        if (browserPackage == null) {
-            browserPackage = getDefaultSystemHandlerActivityPackageForCategory(pm,
-                    Intent.CATEGORY_APP_BROWSER, userId);
-            if (!pm.isSystemPackage(browserPackage)) {
-                browserPackage = null;
-            }
-        }
-        grantPermissionsToPackage(pm, browserPackage, userId, false /* ignoreSystemPackage */,
-                true /*whitelistRestrictedPermissions*/, FOREGROUND_LOCATION_PERMISSIONS);
+        //String browserPackage = ArrayUtils.firstOrNull(getKnownPackages(
+        //        PackageManagerInternal.PACKAGE_BROWSER, userId));
+        //if (browserPackage == null) {
+        //    browserPackage = getDefaultSystemHandlerActivityPackageForCategory(pm,
+        //            Intent.CATEGORY_APP_BROWSER, userId);
+        //    if (!pm.isSystemPackage(browserPackage)) {
+        //        browserPackage = null;
+        //    }
+        //}
+        //grantPermissionsToPackage(pm, browserPackage, userId, false /* ignoreSystemPackage */,
+        //        true /*whitelistRestrictedPermissions*/, FOREGROUND_LOCATION_PERMISSIONS);
 
         // Voice interaction
         if (voiceInteractPackageNames != null) {
@@ -926,8 +926,8 @@ final class DefaultPermissionGrantPolicy {
     }
 
     public void grantDefaultPermissionsToDefaultUseOpenWifiApp(String packageName, int userId) {
-        Log.i(TAG, "Granting permissions to default Use Open WiFi app for user:" + userId);
-        grantIgnoringSystemPackage(NO_PM_CACHE, packageName, userId, ALWAYS_LOCATION_PERMISSIONS);
+        //Log.i(TAG, "Granting permissions to default Use Open WiFi app for user:" + userId);
+        //grantIgnoringSystemPackage(NO_PM_CACHE, packageName, userId, ALWAYS_LOCATION_PERMISSIONS);
     }
 
     public void grantDefaultPermissionsToDefaultSimCallManager(String packageName, int userId) {
