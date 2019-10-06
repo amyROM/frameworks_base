@@ -45,6 +45,7 @@ import com.android.systemui.shared.system.QuickStepContract;
 import com.android.systemui.statusbar.phone.ReverseLinearLayout.ReverseRelativeLayout;
 import com.android.systemui.statusbar.policy.KeyButtonView;
 import com.android.systemui.tuner.TunerService;
+import com.android.systemui.tuner.TunerService.Tunable;
 
 import lineageos.providers.LineageSettings;
 
@@ -52,7 +53,7 @@ import java.io.PrintWriter;
 import java.util.Objects;
 
 public class NavigationBarInflaterView extends FrameLayout
-        implements NavigationModeController.ModeChangedListener, TunerService.Tunable {
+        implements NavigationModeController.ModeChangedListener, Tunable {
 
     private static final String TAG = "NavBarInflater";
 
