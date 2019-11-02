@@ -222,52 +222,8 @@ public class LockIconViewController extends ViewController<LockIconView> impleme
     }
 
     private void updateVisibility() {
-        if (mCancelDelayedUpdateVisibilityRunnable != null) {
-            mCancelDelayedUpdateVisibilityRunnable.run();
-            mCancelDelayedUpdateVisibilityRunnable = null;
-        }
-
-        if (!mIsKeyguardShowing) {
-            mView.setVisibility(View.INVISIBLE);
-            return;
-        }
-
-        boolean wasShowingFpIcon = mUdfpsEnrolled && !mShowUnlockIcon && !mShowLockIcon;
-        boolean wasShowingLockIcon = mShowLockIcon;
-        boolean wasShowingUnlockIcon = mShowUnlockIcon;
-        mShowLockIcon = !mCanDismissLockScreen && !mUserUnlockedWithBiometric && isLockScreen()
-            && (!mUdfpsEnrolled || !mRunningFPS);
-        mShowUnlockIcon = mCanDismissLockScreen && isLockScreen();
-
-        final CharSequence prevContentDescription = mView.getContentDescription();
-        if (mShowLockIcon) {
-            mView.setImageDrawable(mLockIcon);
-            mView.setVisibility(View.VISIBLE);
-            mView.setContentDescription(mLockedLabel);
-        } else if (mShowUnlockIcon) {
-            if (!wasShowingUnlockIcon) {
-                if (wasShowingFpIcon) {
-                    mView.setImageDrawable(mFpToUnlockIcon);
-                    mFpToUnlockIcon.forceAnimationOnUI();
-                    mFpToUnlockIcon.start();
-                } else if (wasShowingLockIcon) {
-                    mView.setImageDrawable(mLockToUnlockIcon);
-                    mLockToUnlockIcon.forceAnimationOnUI();
-                    mLockToUnlockIcon.start();
-                } else {
-                    mView.setImageDrawable(mUnlockIcon);
-                }
-            }
-            mView.setVisibility(View.VISIBLE);
-            mView.setContentDescription(mUnlockedLabel);
-        } else {
-            mView.setVisibility(View.INVISIBLE);
-            mView.setContentDescription(null);
-        }
-        if (!Objects.equals(prevContentDescription, mView.getContentDescription())
-                && mView.getContentDescription() != null) {
-            mView.announceForAccessibility(mView.getContentDescription());
-        }
+        mView.setVisibility(View.INVISIBLE);
+        mView.setContentDescription(null);
     }
 
     private final View.AccessibilityDelegate mAccessibilityDelegate =
