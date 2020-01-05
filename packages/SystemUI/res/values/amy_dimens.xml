@@ -24,4 +24,7 @@
     <!-- Oroño clock -->
     <dimen name="clock_oronos_outline_size">4dp</dimen>
 
+  <!-- Light / Regular style fonts -->
+  <java-symbol type="string" name="config_lightFontFamily" />
+  <java-symbol type="string" name="config_regularFontFamily" />
 </resources>
