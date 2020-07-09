@@ -16,6 +16,8 @@
 
 package com.android.systemui.statusbar.policy;
 
+import static android.provider.Settings.Secure.STATUSBAR_CLOCK_HIDDEN_BY_HOME;
+
 import android.app.StatusBarManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -28,6 +30,7 @@ import android.os.Handler;
 import android.os.Parcelable;
 import android.os.SystemClock;
 import android.os.UserHandle;
+import android.provider.Settings;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.format.DateFormat;
@@ -42,6 +45,7 @@ import com.android.settingslib.Utils;
 import com.android.systemui.DemoMode;
 import com.android.systemui.Dependency;
 import com.android.systemui.FontSizeUtils;
+import com.android.systemui.Interpolators;
 import com.android.systemui.R;
 import com.android.systemui.broadcast.BroadcastDispatcher;
 import com.android.systemui.plugins.DarkIconDispatcher;
@@ -65,7 +69,7 @@ import java.util.TimeZone;
  * Digital clock for the status bar.
  */
 public class Clock extends TextView implements DemoMode, Tunable, CommandQueue.Callbacks,
-        DarkReceiver, ConfigurationListener {
+        DarkReceiver, ConfigurationListener, TaskHelper.Callback {
 
     public static final String CLOCK_SECONDS = "clock_seconds";
     private static final String CLOCK_STYLE =
@@ -76,6 +80,7 @@ public class Clock extends TextView implements DemoMode, Tunable, CommandQueue.C
     private static final String VISIBLE_BY_USER = "visible_by_user";
     private static final String SHOW_SECONDS = "show_seconds";
     private static final String VISIBILITY = "visibility";
+    private static final String QSHEADER = "qsheader";
 
     private final CurrentUserTracker mCurrentUserTracker;
     private final CommandQueue mCommandQueue;
@@ -100,6 +105,9 @@ public class Clock extends TextView implements DemoMode, Tunable, CommandQueue.C
     private final boolean mShowDark;
     private boolean mShowSeconds;
     private Handler mSecondsHandler;
+    private boolean mQsHeader;
+    private boolean mHideClockOnHome;
+    private boolean mIsHomeShowingNow;
 
     /**
      * Whether we should use colors that adapt based on wallpaper/the scrim behind quick settings
@@ -150,6 +158,7 @@ public class Clock extends TextView implements DemoMode, Tunable, CommandQueue.C
         bundle.putBoolean(VISIBLE_BY_USER, mClockVisibleByUser);
         bundle.putBoolean(SHOW_SECONDS, mShowSeconds);
         bundle.putInt(VISIBILITY, getVisibility());
+        bundle.putBoolean(QSHEADER, mQsHeader);
 
         return bundle;
     }
@@ -173,6 +182,7 @@ public class Clock extends TextView implements DemoMode, Tunable, CommandQueue.C
         if (bundle.containsKey(VISIBILITY)) {
             super.setVisibility(bundle.getInt(VISIBILITY));
         }
+        mQsHeader = bundle.getBoolean(QSHEADER, false);
     }
 
     @Override
@@ -194,11 +204,12 @@ public class Clock extends TextView implements DemoMode, Tunable, CommandQueue.C
             // The receiver will return immediately if the view does not have a Handler yet.
             mBroadcastDispatcher.registerReceiverWithHandler(mIntentReceiver, filter,
                     Dependency.get(Dependency.TIME_TICK_HANDLER), UserHandle.ALL);
-            Dependency.get(TunerService.class).addTunable(this, CLOCK_SECONDS, CLOCK_STYLE);
+            Dependency.get(TunerService.class).addTunable(this, CLOCK_SECONDS, CLOCK_STYLE, STATUSBAR_CLOCK_HIDDEN_BY_HOME);
             mCommandQueue.addCallback(this);
             if (mShowDark) {
                 Dependency.get(DarkIconDispatcher.class).addDarkReceiver(this);
             }
+            Dependency.get(TaskHelper.class).addCallback(this);
             mCurrentUserTracker.startTracking();
             mCurrentUserId = mCurrentUserTracker.getCurrentUserId();
         }
@@ -211,6 +222,15 @@ public class Clock extends TextView implements DemoMode, Tunable, CommandQueue.C
         updateClock();
         updateClockVisibility();
         updateShowSeconds();
+
+        // initialize this early so clock is hidden on boot bypassing race conditions
+        // present in TaskHelper getting task stack ready
+        mHideClockOnHome = Settings.Secure.getIntForUser(mContext.getContentResolver(),
+                Settings.Secure.STATUSBAR_CLOCK_HIDDEN_BY_HOME, 0, UserHandle.USER_CURRENT) == 1;
+        if (!mQsHeader && mHideClockOnHome) {
+            mIsHomeShowingNow = true;
+            super.setVisibility(View.GONE); // force gone
+        }
     }
 
     @Override
@@ -232,6 +252,7 @@ public class Clock extends TextView implements DemoMode, Tunable, CommandQueue.C
             if (mShowDark) {
                 Dependency.get(DarkIconDispatcher.class).removeDarkReceiver(this);
             }
+            Dependency.get(TaskHelper.class).removeCallback(this);
             mCurrentUserTracker.stopTracking();
         }
     }
@@ -287,7 +308,11 @@ public class Clock extends TextView implements DemoMode, Tunable, CommandQueue.C
     }
 
     public boolean shouldBeVisible() {
-        return mClockVisibleByPolicy && mClockVisibleByUser;
+        return mClockVisibleByPolicy && mClockVisibleByUser && !isClockHiddenByHome();
+    }
+
+    private boolean isClockHiddenByHome() {
+        return mHideClockOnHome && mIsHomeShowingNow;
     }
 
     private void updateClockVisibility() {
@@ -311,6 +336,12 @@ public class Clock extends TextView implements DemoMode, Tunable, CommandQueue.C
         } else if (CLOCK_STYLE.equals(key)) {
             mAmPmStyle = TunerService.parseInteger(newValue, AM_PM_STYLE_GONE);
             mClockFormatString = ""; // force refresh
+            updateClock();
+        } else if (STATUSBAR_CLOCK_HIDDEN_BY_HOME.equals(key)){
+            if (newValue == null) {
+                newValue = "0";
+            }
+            mHideClockOnHome = !newValue.equals("0");
             updateClock();
         }
     }
@@ -344,6 +375,33 @@ public class Clock extends TextView implements DemoMode, Tunable, CommandQueue.C
                 mContext.getResources().getDimensionPixelSize(
                         R.dimen.status_bar_clock_end_padding),
                 0);
+    }
+
+    @Override
+    public void onHomeVisibilityChanged(boolean isVisible) {
+        mIsHomeShowingNow = isVisible;
+        // don't animate in the following states
+        // feature enabled but is in QSHeader position OR
+        // clock is hidden by user or policy
+        if (!(!mQsHeader && mHideClockOnHome) || !(mClockVisibleByPolicy && mClockVisibleByUser))
+            return;
+        animate().cancel();
+        if (shouldBeVisible()) {
+            setVisibility(View.VISIBLE);
+            animate()
+                    .alpha(1f)
+                    .setDuration(100)
+                    .setInterpolator(Interpolators.ALPHA_IN)
+                    .setStartDelay(0)
+                    .withEndAction(null).start();
+        } else {
+            animate()
+                    .alpha(0f)
+                    .setDuration(150)
+                    .setStartDelay(0)
+                    .setInterpolator(Interpolators.ALPHA_OUT)
+                    .withEndAction(() -> setVisibility(View.GONE)).start();
+        }
     }
 
     /**
@@ -521,5 +579,10 @@ public class Clock extends TextView implements DemoMode, Tunable, CommandQueue.C
             mSecondsHandler.postAtTime(this, SystemClock.uptimeMillis() / 1000 * 1000 + 1000);
         }
     };
+
+    public void setQsHeader() {
+        mQsHeader = true;
+        mClockVisibleByUser = true;
+    }
 }
 
