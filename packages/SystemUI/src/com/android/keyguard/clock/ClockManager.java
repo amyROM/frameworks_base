@@ -153,9 +153,10 @@ public final class ClockManager {
         addBuiltinClock(() -> new BubbleClockController(res, layoutInflater, colorExtractor));
         addBuiltinClock(() -> new AnalogClockController(res, layoutInflater, colorExtractor));
         addBuiltinClock(() -> new TypeClockController(res, layoutInflater, colorExtractor));
-        addBuiltinClock(() -> new OPNumbersClockController(res, layoutInflater, colorExtractor));
-        addBuiltinClock(() -> new OPAnalogClockController(res, layoutInflater, colorExtractor));
         addBuiltinClock(() -> new OPMinimalClockController(res, layoutInflater, colorExtractor));
+        addBuiltinClock(() -> new OPAnalogClockController(res, layoutInflater, colorExtractor));
+        addBuiltinClock(() -> new OPNumbersClockController(res, layoutInflater, colorExtractor));
+        addBuiltinClock(() -> new OPMinimalismClockController(res, layoutInflater, colorExtractor));
         addBuiltinClock(() -> new OPRomanClockController(res, layoutInflater, colorExtractor));
 
         // Store the size of the display for generation of clock preview.
