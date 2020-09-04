@@ -74,7 +74,6 @@ public class AnalogClockController implements ClockPlugin {
      * Small clock shown on lock screen above stack scroller.
      */
     private View mView;
-    private TextClock mLockClock;
 
     /**
      * Helper to extract colors from wallpaper palette for clock face.
