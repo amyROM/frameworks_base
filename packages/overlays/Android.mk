@@ -35,7 +35,32 @@ LOCAL_REQUIRED_MODULES := \
     DisplayCutoutEmulationHoleOverlay \
 	DisplayCutoutEmulationTallOverlay \
 	DisplayCutoutEmulationWaterfallOverlay \
-	FontNotoSerifSourceOverlay \
+	FontAlegreyaSansOverlay \
+	FontArbutusOverlay \
+	FontArvoOverlay \
+	FontArsenalOverlay \
+	FontCaveatOverlay \
+	FontComfortaaOverlay \
+	FontCormorantinfantOverlay \
+	FontCuprumOverlay \
+	FontExo2Overlay \
+	FontGabrielaOverlay \
+	FontInterOverlay \
+	FontJuraOverlay \
+	FontLatoOverlay \
+	FontLobsterOverlay \
+	FontMontserratOverlay \
+	FontNotoSansOverlay \
+	FontNotoSerifOverlay \
+	FontOswaldOverlay \
+	FontPacificoOverlay \
+	FontPhilosopherOverlay \
+	FontRubikOverlay \
+	FontSourceOverlay \
+	FontUbuntuOverlay \
+	FontViaodalibreOverlay \
+	FontVollkornOverlay \
+	FontZillaOverlay \
 	IconPackCircularAndroidOverlay \
 	IconPackCircularLauncherOverlay \
 	IconPackCircularSettingsOverlay \
