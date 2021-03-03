@@ -47,6 +47,9 @@
         <item>🙀</item>
         <item>💩</item>
         <item>🐁</item>
+        <item>🍕</item>
+        <item>Come to Amy's Pizza Cafe today!</item>
+        <item>Get 25% off at Amy's Pizza Cafe today!</item>
     </string-array>
     <string-array name="rare_cat_messages" translatable="false">
         <item>🍩</item>
