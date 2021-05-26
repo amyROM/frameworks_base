@@ -2638,6 +2638,7 @@ public class GlobalActionsDialog implements DialogInterface.OnDismissListener,
         }
 
         public void showRestartOptionsMenu() {
+            dismissPowerOptions();
             mRestartOptionsDialog = GlobalActionsPowerDialog.create(
                     mContext, mRestartOptionsAdapter);
             mRestartOptionsDialog.show();
