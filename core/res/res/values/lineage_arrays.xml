@@ -15,6 +15,7 @@
 <resources>
 
     <!-- System font packages (overlay in vendor) -->
-    <string-array name="config_fontPackages" translatable="false">
-    </string-array>
+￼    <string-array name="config_fontPackages" translatable="false">
+￼    </string-array>
+￼
 </resources>
