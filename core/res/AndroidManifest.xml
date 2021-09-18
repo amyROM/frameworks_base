@@ -1610,7 +1610,7 @@
     <permission android:name="android.permission.INTERNET"
         android:description="@string/permdesc_createNetworkSockets"
         android:label="@string/permlab_createNetworkSockets"
-        android:protectionLevel="dangerous|instant" />
+        android:protectionLevel="normal|instant" />
 
     <!-- Allows applications to access information about networks.
          <p>Protection level: normal
