@@ -48,8 +48,8 @@
     <color name="accent_tertiary_variant_dark_device_default">@color/system_accent3_300</color>
 
     <!-- Background colors -->
-    <color name="background_device_default_dark">#000000</color>
-    <color name="background_device_default_light">#ffffff</color>
+    <color name="background_device_default_dark">@color/system_neutral1_900</color>
+    <color name="background_device_default_light">@color/system_neutral1_50</color>
     <color name="background_floating_device_default_dark">@color/background_device_default_dark</color>
     <color name="background_floating_device_default_light">@color/background_device_default_light</color>
 
