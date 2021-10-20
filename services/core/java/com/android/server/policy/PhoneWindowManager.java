@@ -539,6 +539,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
     // Click volume down + power for partial screenshot
     boolean mClickPartialScreenshot;
+    boolean mClickPartialScreenshotAllowed = true;
 
     private boolean mPendingKeyguardOccluded;
     private boolean mKeyguardOccludedChanged;
@@ -676,11 +677,11 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
     private int mPowerButtonSuppressionDelayMillis = POWER_BUTTON_SUPPRESSION_DELAY_DEFAULT_MILLIS;
 
+    private boolean mLockNowPending = false;
+
     private final List<DeviceKeyHandler> mDeviceKeyHandlers = new ArrayList<>();
 
     private LineageButtons mLineageButtons;
-
-    private boolean mLockNowPending = false;
 
     private static final int MSG_DISPATCH_MEDIA_KEY_WITH_WAKE_LOCK = 3;
     private static final int MSG_DISPATCH_MEDIA_KEY_REPEAT_WITH_WAKE_LOCK = 4;
@@ -1641,7 +1642,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
         @Override
         public void run() {
-            mDefaultDisplayPolicy.takeScreenshot(mScreenshotType, mScreenshotSource);
+            mDefaultDisplayPolicy.takeScreenshot(mScreenshotType, mScreenshotSource,
+                    uri -> { mClickPartialScreenshotAllowed = false; });
         }
     }
 
@@ -4324,10 +4326,13 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                         cancelPendingScreenshotChordAction();
                         cancelPendingAccessibilityShortcutAction();
 
-                        if (mClickPartialScreenshot && mScreenshotChordVolumeDownKeyConsumed) {
+                        if (mClickPartialScreenshot && mClickPartialScreenshotAllowed &&
+                                mScreenshotChordVolumeDownKeyConsumed) {
                             mScreenshotRunnable.setScreenshotType(TAKE_SCREENSHOT_SELECTED_REGION);
                             mHandler.post(mScreenshotRunnable);
                         }
+
+                        mClickPartialScreenshotAllowed = true;
                     }
                 } else if (keyCode == KeyEvent.KEYCODE_VOLUME_UP) {
                     if (down) {
