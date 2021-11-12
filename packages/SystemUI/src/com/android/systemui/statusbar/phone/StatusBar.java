@@ -79,7 +79,6 @@ import android.graphics.drawable.GradientDrawable;
 import android.hardware.display.DisplayManager;
 import android.hardware.fingerprint.IFingerprintService;
 import android.media.AudioAttributes;
-import android.media.MediaScannerConnection;
 import android.metrics.LogMaker;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -303,10 +302,6 @@ public class StatusBar extends SystemUI implements DemoMode,
     public static final boolean SHOW_LOCKSCREEN_MEDIA_ARTWORK = true;
 
     public static final String ACTION_FAKE_ARTWORK = "fake_artwork";
-
-    public static final String MUSIC_FEATURE_ORIGIN_PATH = "/system/product/media/audio/music/";
-    public static final String MUSIC_FEATURE_DESTINATION_PATH = "/sdcard/Music/";
-    public static final String[] MUSIC_FEATURE = {"Desmeon-Hellcat.mp3"};
 
     private static final int MSG_OPEN_NOTIFICATION_PANEL = 1000;
     private static final int MSG_CLOSE_PANELS = 1001;
@@ -1111,8 +1106,6 @@ public class StatusBar extends SystemUI implements DemoMode,
                 }, OverlayPlugin.class, true /* Allow multiple plugins */);
                 mActivityManager = mContext.getSystemService(ActivityManager.class);
                 mFODCircleViewImpl.registerCallback(mFODCircleViewImplCallback);
-                if (AmySystemUIUtils.settingStatusInt("preloaded_music", mContext) == 0)
-                    featuredMusic();
     }
 
     // ================================================================================
@@ -4758,12 +4751,5 @@ public class StatusBar extends SystemUI implements DemoMode,
 
     public int getFodHeight(boolean includeDecor) {
         return mFODCircleViewImpl.getHeight(includeDecor);
-    }
-
-    private void featuredMusic() {
-        for (int i=0; i < MUSIC_FEATURE.length; i++) {
-            AmySystemUIUtils.copyFile(mContext, MUSIC_FEATURE_ORIGIN_PATH, MUSIC_FEATURE[i], MUSIC_FEATURE_DESTINATION_PATH);
-        }
-        AmySystemUIUtils.setSystemSetting("preloaded_music", mContext, 1);
     }
 }
