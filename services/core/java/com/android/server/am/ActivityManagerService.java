@@ -4288,20 +4288,24 @@ public class ActivityManagerService extends IActivityManager.Stub
                             finishForceStopPackageLocked(packageName, appInfo.uid);
                         }
                     }
-                    final Intent intent = new Intent(Intent.ACTION_PACKAGE_DATA_CLEARED,
-                            Uri.fromParts("package", packageName, null));
-                    intent.addFlags(Intent.FLAG_RECEIVER_INCLUDE_BACKGROUND);
-                    intent.putExtra(Intent.EXTRA_UID, (appInfo != null) ? appInfo.uid : -1);
-                    intent.putExtra(Intent.EXTRA_USER_HANDLE, resolvedUserId);
-                    if (isInstantApp) {
-                        intent.putExtra(Intent.EXTRA_PACKAGE_NAME, packageName);
-                        broadcastIntentInPackage("android", null, SYSTEM_UID, uid, pid, intent,
-                                null, null, 0, null, null, permission.ACCESS_INSTANT_APPS, null,
-                                false, false, resolvedUserId, false);
-                    } else {
-                        broadcastIntentInPackage("android", null, SYSTEM_UID, uid, pid, intent,
-                                null, null, 0, null, null, null, null, false, false, resolvedUserId,
-                                false);
+
+                    if (succeeded) {
+                        final Intent intent = new Intent(Intent.ACTION_PACKAGE_DATA_CLEARED,
+                                Uri.fromParts("package", packageName, null /* fragment */));
+                        intent.addFlags(Intent.FLAG_RECEIVER_INCLUDE_BACKGROUND);
+                        intent.putExtra(Intent.EXTRA_UID,
+                                (appInfo != null) ? appInfo.uid : Process.INVALID_UID);
+                        intent.putExtra(Intent.EXTRA_USER_HANDLE, resolvedUserId);
+                        if (isInstantApp) {
+                            intent.putExtra(Intent.EXTRA_PACKAGE_NAME, packageName);
+                        }
+
+                        broadcastIntentInPackage("android", null /* featureId */, SYSTEM_UID,
+                                uid, pid, intent, null /* resolvedType */, null /* resultTo */,
+                                0 /* resultCode */, null /* resultData */, null /* resultExtras */,
+                                isInstantApp ? permission.ACCESS_INSTANT_APPS : null,
+                                null /* bOptions */, false /* serialized */, false /* sticky */,
+                                resolvedUserId, false /* allowBackgroundActivityStarts */);
                     }
 
                     if (observer != null) {
@@ -16913,6 +16917,17 @@ public class ActivityManagerService extends IActivityManager.Stub
                 reportStartInstrumentationFailureLocked(watcher, className, msg);
                 throw new SecurityException(msg);
             }
+            if (!Build.IS_DEBUGGABLE && callingUid != ROOT_UID && callingUid != SHELL_UID
+                    && callingUid != SYSTEM_UID && !hasActiveInstrumentationLocked(callingPid)) {
+                // If it's not debug build and not called from root/shell/system uid, reject it.
+                final String msg = "Permission Denial: instrumentation test "
+                        + className + " from pid=" + callingPid + ", uid=" + callingUid
+                        + ", pkgName=" + getPackageNameByPid(callingPid)
+                        + " not allowed because it's not started from SHELL";
+                Slog.wtfQuiet(TAG, msg);
+                reportStartInstrumentationFailureLocked(watcher, className, msg);
+                throw new SecurityException(msg);
+            }
 
             ActiveInstrumentation activeInstr = new ActiveInstrumentation(this);
             activeInstr.mClass = className;
@@ -16979,6 +16994,29 @@ public class ActivityManagerService extends IActivityManager.Stub
         }
 
         return true;
+    }
+
+    @GuardedBy("this")
+    private boolean hasActiveInstrumentationLocked(int pid) {
+        if (pid == 0) {
+            return false;
+        }
+        synchronized (mPidsSelfLocked) {
+            ProcessRecord process = mPidsSelfLocked.get(pid);
+            return process != null && process.getActiveInstrumentation() != null;
+        }
+    }
+
+    private String getPackageNameByPid(int pid) {
+        synchronized (mPidsSelfLocked) {
+            final ProcessRecord app = mPidsSelfLocked.get(pid);
+
+            if (app != null && app.info != null) {
+                return app.info.packageName;
+            }
+
+            return null;
+        }
     }
 
     private boolean isCallerShell() {
