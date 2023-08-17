@@ -1,13 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-     Copyright (C) 2016-2021 crDroid Android Project
-
+     Copyright (C) 2016-2023 crDroid Android Project
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
      You may obtain a copy of the License at
-
           http://www.apache.org/licenses/LICENSE-2.0
-
      Unless required by applicable law or agreed to in writing, software
      distributed under the License is distributed on an "AS IS" BASIS,
      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,12 +12,7 @@
      limitations under the License.
 -->
 <resources>
-    <!-- Binary clock -->
-    <dimen name="binary_clock_dot_size">8dp</dimen>
-    <dimen name="binary_clock_stroke_width">2dp</dimen>
-    <dimen name="binary_clock_width">100dp</dimen>
-    <dimen name="binary_clock_height">100dp</dimen>
-
-    <!-- Oroño clock -->
-    <dimen name="clock_oronos_outline_size">4dp</dimen>
+  <!-- Light / Regular style fonts -->
+  <java-symbol type="string" name="config_lightFontFamily" />
+  <java-symbol type="string" name="config_regularFontFamily" />
 </resources>
