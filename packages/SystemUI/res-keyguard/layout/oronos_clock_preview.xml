@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    >
+
+    <LinearLayout
+        android:id="@+id/clock_view"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:orientation="vertical">
+
+    <LinearLayout
+        android:id="@+id/clockView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginBottom="8dp"
+        android:layout_marginTop="4dp"
+        android:layout_gravity="center_horizontal"
+        android:gravity="center">
+
+        <TextClock
+            android:id="@+id/clockHr"
+            android:layout_width="84dp"
+            android:layout_height="84dp"
+            android:layout_weight="1"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:background="@drawable/oronos_solidbg"
+            android:format12Hour="hh"
+            android:format24Hour="kk"
+            android:letterSpacing="0.1"
+            android:textSize="36sp" />
+
+        <TextClock
+            android:id="@+id/clockMin"
+            android:layout_width="84dp"
+            android:layout_height="84dp"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:background="@drawable/oronos_roundbg"
+            android:format12Hour="mm"
+            android:format24Hour="mm"
+            android:layout_weight="1"
+            android:letterSpacing="0.1"
+            android:textSize="36sp" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/longDate"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginTop="4dp"
+        android:layout_below="@id/clockView"
+        android:layout_gravity="center_horizontal"
+        android:gravity="center"
+        android:paddingTop="8dp"
+        android:background="@drawable/oronos_roundbg"
+        android:paddingBottom="8dp"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"
+        android:textSize="14sp"
+        android:textAllCaps="true"
+        android:letterSpacing="0.2" />
+
+    </LinearLayout>
+</RelativeLayout>

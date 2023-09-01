@@ -68,6 +68,7 @@ import android.provider.Settings;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.MathUtils;
+import android.view.Choreographer;
 import android.view.Display;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -180,14 +181,14 @@ public class GlobalScreenshot implements ViewTreeObserver.OnComputeInternalInset
     private static final long SCREENSHOT_TO_CORNER_X_DURATION_MS = 234;
     private static final long SCREENSHOT_TO_CORNER_Y_DURATION_MS = 500;
     private static final long SCREENSHOT_TO_CORNER_SCALE_DURATION_MS = 234;
-    private static final long SCREENSHOT_ACTIONS_EXPANSION_DURATION_MS = 400;
-    private static final long SCREENSHOT_ACTIONS_ALPHA_DURATION_MS = 100;
+    private static final long SCREENSHOT_ACTIONS_EXPANSION_DURATION_MS = 200;
+    private static final long SCREENSHOT_ACTIONS_ALPHA_DURATION_MS = 10;
     private static final long SCREENSHOT_DISMISS_Y_DURATION_MS = 350;
     private static final long SCREENSHOT_DISMISS_ALPHA_DURATION_MS = 183;
     private static final long SCREENSHOT_DISMISS_ALPHA_OFFSET_MS = 50; // delay before starting fade
     private static final float SCREENSHOT_ACTIONS_START_SCALE_X = .7f;
     private static final float ROUNDED_CORNER_RADIUS = .05f;
-    private static final int SCREENSHOT_CORNER_DEFAULT_TIMEOUT_MILLIS = 6000;
+    private static final int SCREENSHOT_CORNER_DEFAULT_TIMEOUT_MILLIS = 3000;
     private static final int MESSAGE_CORNER_TIMEOUT = 2;
 
     private final Interpolator mAccelerateInterpolator = new AccelerateInterpolator();
@@ -705,13 +706,27 @@ public class GlobalScreenshot implements ViewTreeObserver.OnComputeInternalInset
             return;
         }
 
-        // copy the input Rect, since SurfaceControl.screenshot can mutate it
-        Rect screenRect = new Rect(crop);
-        int rot = mDisplay.getRotation();
-        int width = crop.width();
-        int height = crop.height();
-        saveScreenshot(SurfaceControl.screenshot(crop, width, height, rot), finisher, screenRect,
-                Insets.NONE, true);
+        // Dismiss the old screenshot first to prevent it from showing up in the new screenshot
+        dismissScreenshot("new screenshot requested", true);
+
+        // Force a new frame to be rendered now that the old screenshot has been cleared
+        mScreenshotLayout.getRootView().invalidate();
+        Choreographer.getInstance().postFrameCallback(time1 -> {
+            // Unfortunately, we need to introduce another frame of latency because this
+            // is a pre-draw callback
+            mScreenshotLayout.getRootView().invalidate();
+
+            // Finally, take the screenshot once we're sure that old screenshot view is gone
+            Choreographer.getInstance().postFrameCallback(time2 -> {
+                // copy the input Rect, since SurfaceControl.screenshot can mutate it
+                Rect screenRect = new Rect(crop);
+                int rot = mDisplay.getRotation();
+                int width = crop.width();
+                int height = crop.height();
+                saveScreenshot(SurfaceControl.screenshot(crop, width, height, rot), finisher, screenRect,
+                        Insets.NONE, true);
+            });
+        });
     }
 
     private void saveScreenshot(Bitmap screenshot, Consumer<Uri> finisher, Rect screenRect,

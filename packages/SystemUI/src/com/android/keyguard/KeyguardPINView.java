@@ -1,3 +1,4 @@
+
 /*
  * Copyright (C) 2012 The Android Open Source Project
  *
@@ -17,7 +18,9 @@
 package com.android.keyguard;
 
 import android.content.Context;
+import android.os.AsyncTask;
 import android.os.UserHandle;
+import android.provider.Settings;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
@@ -25,8 +28,12 @@ import android.view.animation.AnimationUtils;
 import android.widget.LinearLayout;
 
 import com.android.keyguard.KeyguardSecurityModel.SecurityMode;
+import com.android.internal.widget.LockPatternUtils;
+import com.android.internal.widget.LockPatternUtils.RequestThrottledException;
+import com.android.keyguard.PasswordTextView.QuickUnlockListener;
 import com.android.settingslib.animation.AppearAnimationUtils;
 import com.android.settingslib.animation.DisappearAnimationUtils;
+import com.android.internal.widget.LockscreenCredential;
 import com.android.systemui.Dependency;
 import com.android.systemui.R;
 
@@ -57,6 +64,7 @@ public class KeyguardPINView extends KeyguardPinBasedInputView {
     private final KeyguardUpdateMonitor mKeyguardUpdateMonitor;
 
     private static List<Integer> sNumbers = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 0);
+    private final int userId = KeyguardUpdateMonitor.getCurrentUser();
 
     public KeyguardPINView(Context context) {
         this(context, null);
@@ -159,6 +167,21 @@ public class KeyguardPINView extends KeyguardPinBasedInputView {
                 view.setDigit(sNumbers.get(i));
             }
         }
+
+        boolean quickUnlock = (Settings.System.getIntForUser(getContext().getContentResolver(),
+                Settings.System.LOCKSCREEN_QUICK_UNLOCK_CONTROL, 0, UserHandle.USER_CURRENT) == 1);
+
+        if (quickUnlock) {
+            mPasswordEntry.setQuickUnlockListener(new QuickUnlockListener() {
+                public void onValidateQuickUnlock(String password) {
+                    if (password != null && password.length() == keyguardPinPasswordLength()) {
+                        validateQuickUnlock(mLockPatternUtils, password, userId);
+                    }
+                }
+            });
+        } else {
+            mPasswordEntry.setQuickUnlockListener(null);
+        }
     }
 
     @Override
@@ -234,5 +257,49 @@ public class KeyguardPINView extends KeyguardPinBasedInputView {
     @Override
     public SecurityMode getSecurityMode() {
         return SecurityMode.PIN;
+    }
+
+    private AsyncTask<?, ?, ?> validateQuickUnlock(final LockPatternUtils utils,
+            final String password,
+            final int userId) {
+        AsyncTask<Void, Void, Boolean> task = new AsyncTask<Void, Void, Boolean>() {
+
+            @Override
+            protected Boolean doInBackground(Void... args) {
+                try {
+                    return utils.checkCredential(
+                           LockscreenCredential.createPinOrNone(password),
+                                                userId, null);
+                } catch (RequestThrottledException ex) {
+                    return false;
+                }
+            }
+
+            @Override
+            protected void onPostExecute(Boolean result) {
+                runQuickUnlock(result);
+            }
+        };
+        task.execute();
+        return task;
+    }
+
+    private void runQuickUnlock(Boolean matched) {
+        if (matched) {
+            mPasswordEntry.setEnabled(false);
+            mCallback.reportUnlockAttempt(userId, true, 0);
+            mCallback.dismiss(true, userId, SecurityMode.PIN);
+            resetPasswordText(true, true);
+        }
+    }
+
+    private int keyguardPinPasswordLength() {
+        int pinPasswordLength = -1;
+        try {
+            pinPasswordLength = (int) mLockPatternUtils.getLockSettings().getLong("lockscreen.pin_password_length", -1, userId);
+        } catch (Exception e) {
+            // do nothing
+        }
+        return pinPasswordLength >= 4 ? pinPasswordLength : -1;
     }
 }
