@@ -2312,7 +2312,7 @@ public class ExpandableNotificationRow extends ActivatableNotificationView
             return mGuts.getIntrinsicHeight();
         } else if ((isChildInGroup() && !isGroupExpanded())) {
             return mPrivateLayout.getMinHeight();
-        } else if (mSensitive && mHideSensitiveForIntrinsicHeight) {
+        } else if (shouldShowPublic()) {
             return getMinHeight();
         } else if (mIsSummaryWithChildren) {
             return mChildrenContainer.getIntrinsicHeight();
@@ -2336,7 +2336,8 @@ public class ExpandableNotificationRow extends ActivatableNotificationView
      *         except for legacy use cases.
      */
     public boolean canShowHeadsUp() {
-        if (mOnKeyguard && !isDozing() && !isBypassEnabled()) {
+        if (mOnKeyguard && !isDozing() && !isBypassEnabled() || (mEntry != null
+                && mEntry.secureContent())) {
             return false;
         }
         return true;
@@ -2516,7 +2517,8 @@ public class ExpandableNotificationRow extends ActivatableNotificationView
             return;
         }
         boolean oldShowingPublic = mShowingPublic;
-        mShowingPublic = mSensitive && hideSensitive;
+        mShowingPublic = (mSensitive && hideSensitive)
+                || (mEntry != null && mEntry.secureContent());
         if (mShowingPublicInitialized && mShowingPublic == oldShowingPublic) {
             return;
         }
@@ -2577,6 +2579,12 @@ public class ExpandableNotificationRow extends ActivatableNotificationView
         }
     }
 
+    public void onAppStateChanged() {
+        Dependency.get(Dependency.MAIN_HANDLER).post(() ->
+            setHideSensitive(mSensitive, true, 0, 100)
+        );
+    }
+
     @Override
     public boolean mustStayOnScreen() {
         return mIsHeadsUp && mMustStayOnScreen;
@@ -2592,7 +2600,8 @@ public class ExpandableNotificationRow extends ActivatableNotificationView
     }
 
     private boolean shouldShowPublic() {
-        return mSensitive && mHideSensitiveForIntrinsicHeight;
+        return (mSensitive && mHideSensitiveForIntrinsicHeight) || (mEntry != null
+                && mEntry.secureContent());
     }
 
     public void makeActionsVisibile() {
